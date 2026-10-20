@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A Visual Symbol Book</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Knewave&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="scene intro" id="scene">
+    <div class="floor-shadow" id="floorShadow"></div>
+    <div class="tilt" id="tilt">
+      <!-- 姿态层：书和文字一起躺下 / 立起，所以文字永远和书在同一个平面上 -->
+      <div class="pose" id="pose" data-state="lying">
+        <div class="book" id="book" data-state="lying">
+          <!-- 书页由 script.js 生成 -->
+        </div>
+        <!-- 书本右上角的蓝色圆：躺着时和书在同一个地面上 -->
+        <div class="corner-circle" aria-hidden="true"></div>
+        <div class="label" id="label">
+          <p class="ink" id="hint"></p>
+          <button class="ink ink-btn" id="layDown" type="button" hidden></button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 入场时扫过屏幕的蓝 / 黑斜条，以及这本书的三个主角：圆、方、三角 -->
+  <div class="slash slash-blue" aria-hidden="true"></div>
+  <div class="slash slash-black" aria-hidden="true"></div>
+  <div class="intro-shape shape-circle" aria-hidden="true"></div>
+  <div class="intro-shape shape-square" aria-hidden="true"></div>
+  <div class="intro-shape shape-triangle" aria-hidden="true"></div>
+
+  <!-- 进出游乐场时飞过屏幕的一群图形 -->
+  <div class="swarm" id="swarm" aria-hidden="true"></div>
+
+  <!-- 立体游乐场：点书页上的图形后出现 -->
+  <section class="play" id="play" hidden>
+    <div class="play-canvas" id="playCanvas"></div>
+
+    <!-- 计时 / 分数 / 倍数 -->
+    <div class="play-hud">
+      <div class="play-timer" id="playTimer">10.0</div>
+      <div class="play-timebar"><span id="playTimebar"></span></div>
+      <div class="play-score" id="playScore">0</div>
+      <div class="play-mult" id="playMult">&times;1</div>
+    </div>
+    <!-- 左边：玩家拼出来的所有组合 -->
+    <section class="play-log" aria-label="Combinations found">
+      <h3 class="log-head">Combos <span id="logCount">0</span></h3>
+      <ol class="log-list" id="logList"></ol>
+    </section>
+    <p class="play-pop" id="playPop" aria-live="polite"></p>
+    <!-- 图形快飞走时的警告 -->
+    <p class="play-warn" id="playWarn" hidden>Mash <kbd>Space</kbd>!</p>
+
+    <!-- 开始前的规则卡 + 倒数 -->
+    <div class="play-ready" id="playReady" hidden>
+      <h3 class="ready-title">How to play</h3>
+      <ol class="ready-rules">
+        <li><b>Make new combos</b> &mdash; copy, arrange, rotate, recolor</li>
+        <li><b>Each new combo</b> = points <em>+ a little time</em></li>
+        <li><b>Keep going</b> &mdash; the multiplier climbs</li>
+        <li><b>They spread out?</b> Mash <kbd>Space</kbd>! <em class="danger">If one flies away, you lose.</em></li>
+      </ol>
+      <button class="ready-go" id="readyGo" type="button">I'm ready!</button>
+    </div>
+    <div class="play-timeup" id="playTimeup" hidden>
+      <p class="timeup-title">Time up!</p>
+      <p class="timeup-score" id="timeupScore"></p>
+      <p class="timeup-best" id="timeupBest"></p>
+    </div>
+    <div class="play-heading">
+      <h2 class="play-title" id="playTitle"></h2>
+      <p class="play-tags" id="playTags"></p>
+      <p class="play-note" id="playNote"></p>
+    </div>
+    <nav class="play-tools">
+      <button class="play-btn" id="playCopy" type="button">+ Copy</button>
+      <button class="play-btn" id="playRemove" type="button">&minus; Remove</button>
+      <button class="play-btn" id="playArrange" type="button">Arrange</button>
+      <button class="play-btn" id="playSpin" type="button">Rotate</button>
+      <button class="play-btn" id="playColor" type="button">Color</button>
+      <button class="play-btn play-hold" id="playHold" type="button">Pull back! (Space)</button>
+      <button class="play-btn play-back" id="playBack" type="button">Back to the book</button>
+    </nav>
+    <p class="play-hint">New combos give points and time &middot; the higher the multiplier, the more they spread &middot; mash Space &mdash; if one flies away, you lose</p>
+  </section>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="script.js"></script>
+  <script src="play.js"></script>
+</body>
+</html>
