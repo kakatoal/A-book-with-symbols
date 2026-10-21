@@ -1,28 +1,30 @@
 // ---------- 书页内容 ----------
 // 按顺序填写每一面的图片路径；null 表示空白纸页。
+// 书里用的是 images/web/ 里的小尺寸版本（1400 像素高），iPad 上更省显存；
+// 换了原图后，运行 python tools/make-web-images.py 重新生成。
 // 每两面组成一张纸：正面在右页，背面在左页。
 // [0] 封面, [1] 封面内侧 ... 倒数第二面是封底内侧，最后一面是封底。
 const PAGES = [
-  'images/cover.jpg',    // 封面
+  'images/web/cover.jpg',    // 封面
   null,                  // 封面内侧（左）
-  'images/pages/0.jpg',  // 右：Methodology
-  'images/pages/1.jpg',  // 左：A Square
-  'images/pages/2.jpg',  // 右
-  'images/pages/3.jpg',  // 左
-  'images/pages/4.jpg',  // 右
-  'images/pages/5.jpg',  // 左：A Triangle
-  'images/pages/6.jpg',  // 右
-  'images/pages/7.jpg',  // 左
-  'images/pages/8.jpg',  // 右
-  'images/pages/9.jpg',  // 左：A Circle
-  'images/pages/10.jpg', // 右
-  'images/pages/11.jpg', // 左
-  'images/pages/12.jpg', // 右（封底内侧）
-  'images/cover.jpg',    // 封底（和封面一样）
+  'images/web/0.jpg',  // 右：Methodology
+  'images/web/1.jpg',  // 左：A Square
+  'images/web/2.jpg',  // 右
+  'images/web/3.jpg',  // 左
+  'images/web/4.jpg',  // 右
+  'images/web/5.jpg',  // 左：A Triangle
+  'images/web/6.jpg',  // 右
+  'images/web/7.jpg',  // 左
+  'images/web/8.jpg',  // 右
+  'images/web/9.jpg',  // 左：A Circle
+  'images/web/10.jpg', // 右
+  'images/web/11.jpg', // 左
+  'images/web/12.jpg', // 右（封底内侧）
+  'images/web/cover.jpg',    // 封底（和封面一样）
 ];
 
 // 封面图片：也用来生成封面板边缘和书脊的纹理
-const COVER_IMAGE = 'images/cover.jpg';
+const COVER_IMAGE = 'images/web/cover.jpg';
 
 // 厚度（相对书页高度的比例）
 const BOOK_THICKNESS = 0.05;   // 整本书的厚度
@@ -43,6 +45,7 @@ const label = document.getElementById('label');
 const layDownBtn = document.getElementById('layDown');
 
 const leaves = [];
+let glareEl = null;
 const blocks = {};
 let leafThickness = []; // 每张纸的厚度（px）
 let flipped = 0; // 已经翻过去的纸张数
@@ -99,6 +102,9 @@ function buildBook() {
   book.style.setProperty('--cover-img', `url("${COVER_IMAGE}")`);
   blocks.left = createBlock('left');
   blocks.right = createBlock('right');
+  const gutter = document.createElement('div');
+  gutter.className = 'gutter';
+  book.appendChild(gutter);
 
   const leafCount = Math.ceil(PAGES.length / 2);
   for (let i = 0; i < leafCount; i++) {
@@ -108,6 +114,12 @@ function buildBook() {
     if (i === 0) leaf.classList.add('front-cover');
     leaf.appendChild(createFace(PAGES[i * 2], 'front', i * 2));
     leaf.appendChild(createFace(PAGES[i * 2 + 1], 'back', i * 2 + 1));
+    if (i === 0) {
+      // 封面上那道细细的反光带
+      glareEl = document.createElement('div');
+      glareEl.className = 'glare';
+      leaf.querySelector('.face.front').appendChild(glareEl);
+    }
     leaf.addEventListener('click', (e) => {
       if (book.dataset.state !== 'standing') return;
       e.stopPropagation();
@@ -335,19 +347,26 @@ document.addEventListener('mouseleave', () => {
   pointer.y = 0;
 });
 
+let lastTiltKey = '';
+
 function animateTilt() {
   const active = book.dataset.state === 'standing';
   const targetX = active ? pointer.x : 0;
   const targetY = active ? pointer.y : 0;
   current.x += (targetX - current.x) * TILT_EASE;
   current.y += (targetY - current.y) * TILT_EASE;
-  tilt.style.transform =
-    `translate(${current.x * TILT_MOVE}px, ${current.y * TILT_MOVE}px) ` +
-    `rotateX(${-current.y * TILT_ROTATE_X}deg) rotateY(${current.x * TILT_ROTATE_Y}deg)`;
-
-  // 反光跟着鼠标在书面上移动
   glare.x += (targetX - glare.x) * TILT_EASE;
-  book.style.setProperty('--gx', `${50 + glare.x * 45}%`);
+
+  // 只有真的在动时才更新：一直改 transform 会让 Safari 每帧重新给 3D 图层排序
+  const key = `${current.x.toFixed(4)},${current.y.toFixed(4)},${glare.x.toFixed(4)}`;
+  if (key !== lastTiltKey) {
+    lastTiltKey = key;
+    tilt.style.transform =
+      `translate(${current.x * TILT_MOVE}px, ${current.y * TILT_MOVE}px) ` +
+      `rotateX(${-current.y * TILT_ROTATE_X}deg) rotateY(${current.x * TILT_ROTATE_Y}deg)`;
+    // 反光带跟着鼠标左右移动（只移动反光这一层，不让整本书重新算样式）
+    if (glareEl) glareEl.style.transform = `translateX(${glare.x * 22.5}%)`;
+  }
   requestAnimationFrame(animateTilt);
 }
 

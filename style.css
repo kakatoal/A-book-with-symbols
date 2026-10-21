@@ -56,9 +56,9 @@ body {
   width: calc(var(--page-w) * 1.05);
   height: calc(var(--page-h) * 0.55);
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.22) 0%, rgba(0, 0, 0, 0) 70%);
+  /* 柔边直接做在渐变里，不用 blur 滤镜（滤镜在动画里很耗性能） */
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.1) 40%, rgba(0, 0, 0, 0) 72%);
   transform: translateY(calc(var(--page-h) * 0.12));
-  filter: blur(8px);
   transition: opacity var(--pose-time) ease, transform var(--pose-time) ease;
 }
 
@@ -139,6 +139,23 @@ body {
   transition: transform var(--flip-time) cubic-bezier(0.45, 0.05, 0.3, 1);
 }
 
+/* 书沟：垫在书脊下面的一条暗色，万一两页之间有缝，露出来的是它而不是白色背景 */
+.gutter {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -8px;
+  width: 16px;
+  background: linear-gradient(to right, #b9b6ae, #8f8c85 50%, #b9b6ae);
+  transform: translateZ(0.5px);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.book.open .gutter {
+  opacity: 1;
+}
+
 /* 被压在下面、看不见的纸：不画，免得 Safari 排序出错时跳到上面 */
 .leaf.buried {
   visibility: hidden;
@@ -150,7 +167,8 @@ body {
 
 .face {
   position: absolute;
-  inset: 0;
+  /* 书脊一侧多盖 1px，左右两页在中间互相压住，不留缝 */
+  inset: 0 0 0 -1px;
   overflow: hidden;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
@@ -167,8 +185,13 @@ body {
   pointer-events: none;
 }
 
+/* 正反两面各往外挪 0.3px，不贴在同一个平面上（Safari 会在两个面之间闪） */
+.face.front {
+  transform: translateZ(0.3px);
+}
+
 .face.back {
-  transform: rotateY(180deg);
+  transform: rotateY(180deg) translateZ(0.3px);
 }
 
 /* 靠近书脊一侧的阴影，模拟纸张弯曲 */
@@ -188,26 +211,28 @@ body {
   background: linear-gradient(to left, rgba(0, 0, 0, 0.18) 0%, rgba(0, 0, 0, 0) 6%);
 }
 
-/* 反光：只有封面上一道细的斜向高光带，拿起书后出现并跟随鼠标移动
-   （--gx 由 script.js 更新） */
-.leaf.front-cover .face.front::before {
-  content: "";
+/* 反光：只有封面上一道细的斜向高光带，拿起书后出现并跟随鼠标移动 */
+/* 宽度是封面的两倍，中间有一道细光；script.js 只改它的 translateX */
+.glare {
   position: absolute;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  left: -50%;
+  width: 200%;
   pointer-events: none;
-  mix-blend-mode: overlay;
   background: linear-gradient(
     115deg,
-    rgba(255, 255, 255, 0) calc(var(--gx, 50%) - 3%),
-    rgba(255, 255, 255, 0.5) calc(var(--gx, 50%) - 0.4%),
-    rgba(255, 255, 255, 0.5) calc(var(--gx, 50%) + 0.4%),
-    rgba(255, 255, 255, 0) calc(var(--gx, 50%) + 3%)
+    rgba(255, 255, 255, 0) 48.5%,
+    rgba(255, 255, 255, 0.4) 49.8%,
+    rgba(255, 255, 255, 0.4) 50.2%,
+    rgba(255, 255, 255, 0) 51.5%
   );
   opacity: 0;
   transition: opacity var(--pose-time) ease;
+  will-change: transform;
 }
 
-.book[data-state="standing"] .leaf.front-cover .face.front::before {
+.book[data-state="standing"] .glare {
   opacity: 1;
 }
 
