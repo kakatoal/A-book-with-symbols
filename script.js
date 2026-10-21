@@ -134,7 +134,15 @@ function render() {
   const n = leaves.length;
   // 一次翻了好几页（比如合书）时，两侧厚度跟着整段动画平滑变化
   const manyAtOnce = Math.abs(flipped - lastFlipped) > 1;
+  // 只显示每一摞最上面那张纸（和正在翻动的纸），被压在下面的纸隐藏掉。
+  // iPad 上的 Safari 给一层层很薄的 3D 平面排序时会出错，
+  // 下面的纸会突然"跳"到上面来乱闪；藏起来就不会被画错。
+  const lo = Math.min(lastFlipped, flipped) - 1;
+  const hi = Math.max(lastFlipped, flipped);
   lastFlipped = flipped;
+  leaves.forEach((leaf, i) => leaf.classList.toggle('buried', i < lo || i > hi));
+  clearTimeout(render.buryTimer);
+  render.buryTimer = setTimeout(buryHiddenLeaves, cssTime('--flip-time') + 50);
   leaves.forEach((leaf, i) => {
     const isFlipped = i < flipped;
     // 每张纸放在它所在那一摞的对应高度上：
@@ -173,6 +181,11 @@ function render() {
 
   // 文字跟着书的左边缘：翻开时书向左多出半页
   pose.style.setProperty('--label-x', flipped > 0 && flipped < n ? 'calc(var(--page-w) / -2)' : '0px');
+}
+
+// 翻页动画结束后，只留两摞最上面的那两张纸
+function buryHiddenLeaves() {
+  leaves.forEach((leaf, i) => leaf.classList.toggle('buried', i !== flipped - 1 && i !== flipped));
 }
 
 function updateBlock(block, depth, hasBottomBoard, hasTopBoard, smooth) {
